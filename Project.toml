@@ -1,0 +1,22 @@
+name = "ScordelisLoRoofBenchmark"
+uuid = "15a69de8-a591-4752-96a5-38aae4f8f87f"
+version = "0.1.0"
+authors = ["Petr Krysl <pkrysl@ucsd.edu>"]
+
+[deps]
+DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
+FinEtools = "91bb5406-6c9a-523d-811d-0644c4229550"
+FinEtoolsDeforLinear = "e9187c00-8bdd-11e9-1e70-7ba8303116a2"
+FinEtoolsFlexStructures = "723391e6-6814-4d1d-921c-018f691214d8"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+PGFPlotsX = "8314cec4-20b6-5062-9cdb-752b83310925"
+RichardsonExtrapolationUQ = "4e46a7e1-8e58-4e9b-8480-33443757f467"
+
+[compat]
+DelimitedFiles = "1.9.1"
+FinEtools = "8.2.11"
+FinEtoolsDeforLinear = "3.1.0"
+FinEtoolsFlexStructures = "3.6.4"
+LinearAlgebra = "1.12.0"
+PGFPlotsX = "1.6.2"
+RichardsonExtrapolationUQ = "0.1.0"
