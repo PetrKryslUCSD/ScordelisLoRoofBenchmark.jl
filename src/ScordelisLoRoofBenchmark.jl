@@ -62,6 +62,7 @@ function _execute_q4rs(mesh=:uniform, n=8, support = :soft, deflection_only=fals
     else 
         @error "Unknown mesh"
     end
+    @info "Number of nodes: $(count(fens)); Number of elements: $(count(fes))"
     bfes = meshboundary(fes)
     ela0 = selectelem(fens, bfes; facing=true, direction=Float64[-1, 0])
     ela1 = selectelem(fens, bfes; facing=true, direction=Float64[+1, 0])
@@ -151,12 +152,12 @@ function _execute_q4rs(mesh=:uniform, n=8, support = :soft, deflection_only=fals
     peak_nodes = connectednodes(subset(bfes, ela0))
     peak_nodes_y = sortperm(fens.xyz[peak_nodes, 2])
     peak_nodes_ordered = peak_nodes[peak_nodes_y]
-    peak_dists = fens.xyz[peak_nodes_ordered, 2] ./ L
+    peak_dists = fens.xyz[peak_nodes_ordered, 2] ./ (L/2)
 
     free_nodes = connectednodes(subset(bfes, ela1))
     free_nodes_y = sortperm(fens.xyz[free_nodes, 2])
     free_nodes_ordered = free_nodes[free_nodes_y]
-    free_dists = fens.xyz[free_nodes_ordered, 2] ./ L
+    free_dists = fens.xyz[free_nodes_ordered, 2] ./ (L/2)
 
     # Visualization
     basef = "scolo_q4rs-$(support)-$(mesh)-$(n)"
@@ -306,12 +307,12 @@ function _execute_t3ff(mesh=:uniform, n=8, support = :soft, deflection_only=fals
     peak_nodes = connectednodes(subset(bfes, ela0))
     peak_nodes_y = sortperm(fens.xyz[peak_nodes, 2])
     peak_nodes_ordered = peak_nodes[peak_nodes_y]
-    peak_dists = fens.xyz[peak_nodes_ordered, 2] ./ L
+    peak_dists = fens.xyz[peak_nodes_ordered, 2] ./ (L/2)
 
     free_nodes = connectednodes(subset(bfes, ela1))
     free_nodes_y = sortperm(fens.xyz[free_nodes, 2])
     free_nodes_ordered = free_nodes[free_nodes_y]
-    free_dists = fens.xyz[free_nodes_ordered, 2] ./ L
+    free_dists = fens.xyz[free_nodes_ordered, 2] ./ (L/2)
 
     # Visualization
     basef = "scolo_t3ff-$(support)-$(mesh)-$(n)"
@@ -365,9 +366,9 @@ end
 
 const COLORS = ["red", "green", "blue", "black", "cyan", "magenta", "yellow", "gray"]
 const MARKERS = [
-    "square",
-    "triangle",
     "diamond",
+    "triangle",
+    "square",  
     "triangle*",
     "x",
     "square*",
@@ -438,7 +439,7 @@ function extrapolate_resultants(basef = "", ns = [16, 32, 64, 128], res = "q")
                 push!(r, corner[3] == :b ? A[1, 2] : A[end, 2])
             end
             extrapolation = nothing
-            try
+            try    
                 extrapolation = RichardsonExtrapolationUQ.richextrapol_uq(r, 1.0 ./ ns)# richextrapol(r, 1.0 ./ ns)
             catch
                 extrapolation = (data = r,)
@@ -449,9 +450,22 @@ function extrapolate_resultants(basef = "", ns = [16, 32, 64, 128], res = "q")
     return results
 end
 
+function resultants(;ns=[128, 256, 512, 1024], mesh=:uniform, element=:q4rs, support=:soft)
+    deflection_only = false
+    for n in ns
+        if Symbol(element) == :q4rs
+            v = _execute_q4rs(Symbol(mesh), n, Symbol(support), deflection_only)
+        elseif Symbol(element) == :t3ff
+            v = _execute_t3ff(Symbol(mesh), n, Symbol(support), deflection_only)
+        else
+            throw(ArgumentError("Unsupported element type"))
+        end
+    end
+    @info "Resultants along edges saved to CSV files. Use plot_resultants() to generate plots."
+    return ns
+end
 
-function deflection(;ns=4 .* [16, 32, 64, 128, ], mesh=:uniform, element=:q4rs, support=:soft)
-    deflection_only = true
+function deflection(;ns=4 .* [16, 32, 64, 128, ], mesh=:uniform, element=:q4rs, support=:soft, deflection_only = true)
     deflectionsB = Float64[]
     for n in ns
         if Symbol(element) == :q4rs
