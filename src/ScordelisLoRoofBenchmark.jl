@@ -374,7 +374,7 @@ const MARKERS = [
     "square*",
     "diamond*",
 ]
-const MARK_REPEAT = [13, 15, 17, 19, 23, 27, 29] .+ 73
+const MARK_REPEAT = [37, 43, 57, 79, 23, 27, 29] .+ 173
 
 function plot_resultants(basef = "", 
               res = "q")
@@ -447,6 +447,31 @@ function extrapolate_resultants(basef = "", ns = [16, 32, 64, 128], res = "q")
             push!(results, (corner = corner[1], nc = nc, extrapolation = extrapolation))
         end
     end
+    for edge in ["midsection", "diaphragm", "peak", "free"]
+        for nc in ncs
+            rmx = Float64[]
+            rmn = Float64[]
+            for n in ns
+                f = "$(basef)-$(n)-$(edge)-$(res)$(nc).csv"
+                A = readdlm(f, ',', Float64; skipstart=1)
+                push!(rmx, maximum(A[:, 2]))
+                push!(rmn, minimum(A[:, 2]))
+            end
+            extrapolationmx = nothing
+            try    
+                extrapolationmx = RichardsonExtrapolationUQ.richextrapol_uq(rmx, 1.0 ./ ns)# richextrapol(r, 1.0 ./ ns)
+            catch
+                extrapolationmx = (data = rmx,)
+            end
+            extrapolationmn = nothing
+            try    
+                extrapolationmn = RichardsonExtrapolationUQ.richextrapol_uq(rmn, 1.0 ./ ns)# richextrapol(r, 1.0 ./ ns)
+            catch
+                extrapolationmn = (data = rmn,)
+            end
+            push!(results, (edge = Symbol(edge), nc = nc, extrapolationmx = extrapolationmx, extrapolationmn = extrapolationmn))
+        end
+    end
     return results
 end
 
@@ -456,6 +481,7 @@ function resultants(;ns=[128, 256, 512, 1024], mesh=:uniform, element=:q4rs, sup
         if Symbol(element) == :q4rs
             v = _execute_q4rs(Symbol(mesh), n, Symbol(support), deflection_only)
         elseif Symbol(element) == :t3ff
+
             v = _execute_t3ff(Symbol(mesh), n, Symbol(support), deflection_only)
         else
             throw(ArgumentError("Unsupported element type"))
