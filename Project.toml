@@ -4,15 +4,19 @@ version = "0.1.0"
 authors = ["Petr Krysl <pkrysl@ucsd.edu>"]
 
 [deps]
+ArgParse = "c7e460c6-2fb9-53a9-8c5b-16f535851c63"
+DataDrop = "aa547a04-dd37-49ab-8e73-656744f8a8fc"
 DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
 FinEtools = "91bb5406-6c9a-523d-811d-0644c4229550"
 FinEtoolsDeforLinear = "e9187c00-8bdd-11e9-1e70-7ba8303116a2"
 FinEtoolsFlexStructures = "723391e6-6814-4d1d-921c-018f691214d8"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 PGFPlotsX = "8314cec4-20b6-5062-9cdb-752b83310925"
-RichardsonExtrapolationUQ = "4e46a7e1-8e58-4e9b-8480-33443757f467"
+RichardsonExtrapolationUQ = "3a1f33c3-1000-4744-b051-f2f05352a4ba"
 
 [compat]
+ArgParse = "1.2.0"
+DataDrop = "0.1.7"
 DelimitedFiles = "1.9.1"
 FinEtools = "8.2.11"
 FinEtoolsDeforLinear = "3.1.0"

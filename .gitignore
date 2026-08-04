@@ -31,3 +31,5 @@ JuliaLocalPreferences.toml
 *.csv
 *.vtu
 *.pdf
+*.png
+*.json
