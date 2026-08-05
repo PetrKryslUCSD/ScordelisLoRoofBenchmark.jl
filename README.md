@@ -12,15 +12,15 @@ julia --project driver.jl --help
 ```
 
 One can control 
-- What to compute (deflection, resultants, plots)
-- Support over the diaphragm (hard or soft)
-- The number of finite element edges along the diaphragm edge
-- Finite element to employ (quadrilateral q4rs or triangle t3ff)
-- The mesh type  (biased or biased)
+- What to compute (deflection, resultants, plots).
+- Support over the diaphragm (hard or soft).
+- The number of finite element edges along the diaphragm edge.
+- Finite element to employ (quadrilateral q4rs or triangle t3ff).
+- The mesh type  (biased or biased).
 - The number of refinements of the mesh (4 to get the results with 
     uncertainty quantification in the form of a 95% confidence interval).
     The refinements are by bisection.
-- The verbosity of the output (0=minimal, 1=more verbose)
+- The verbosity of the output (0=minimal, 1=more verbose).
 
 Any command will activate and instantiate the environment,
 which may lead to a longish pre-compilation period.
