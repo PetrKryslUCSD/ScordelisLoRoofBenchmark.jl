@@ -47,8 +47,8 @@ cylindrical!(csmatout, XYZ, tangents, feid, qpid) = begin
     return csmatout
 end
 
-function _exe(;basef="scolo", element=:q4rs, mesh=:uniform, n=8, support = :soft, deflection_only=false, verbose=0)
-    verbose > 0 && @info "Element: $element; Support: $support; Mesh: $mesh, $n elements per side"
+function _exe(;basef="scolo", element=:q4rs, mesh=:uniform, n=8, support = :soft, deflection_only=false, verbosity=0)
+    verbosity > 0 && @info "Element: $element; Support: $support; Mesh: $mesh, $n elements per side"
     bias = 100
     if mesh == :uniform
         fens, fes = Q4block(40/360*2*pi, L/2, n, 2*n);
@@ -64,7 +64,7 @@ function _exe(;basef="scolo", element=:q4rs, mesh=:uniform, n=8, support = :soft
     if element == :t3ff
         fens, fes = Q4toT3(fens, fes);
     end
-    verbose > 0 && @info "Number of nodes: $(count(fens)); Number of elements: $(count(fes))"
+    verbosity > 0 && @info "Number of nodes: $(count(fens)); Number of elements: $(count(fes))"
     bfes = meshboundary(fes)
     ela0 = selectelem(fens, bfes; facing=true, direction=Float64[-1, 0])
     ela1 = selectelem(fens, bfes; facing=true, direction=Float64[+1, 0])
@@ -145,13 +145,13 @@ function _exe(;basef="scolo", element=:q4rs, mesh=:uniform, n=8, support = :soft
     scattersysvec!(dchi, Uf, DOF_KIND_FREE)
     
     deflatB = dchi.values[nl, 3][1]
-    verbose > 0 && @info "Deflection at B: $(round(deflatB, digits = 7))"
+    verbosity > 0 && @info "Deflection at B: $(round(deflatB, digits = 7))"
 
     if deflection_only
         return deflatB
     end
     
-    verbose > 0 && @info "Generating resultants and visualizations"
+    verbosity > 0 && @info "Generating resultants and visualizations"
 
     midsection_nodes = connectednodes(subset(bfes, ell1))
     midsection_nodes_x = sortperm(fens.xyz[midsection_nodes, 1])
@@ -174,12 +174,12 @@ function _exe(;basef="scolo", element=:q4rs, mesh=:uniform, n=8, support = :soft
     free_dists = fens.xyz[free_nodes_ordered, 2] ./ (L/2)
 
     # Visualization
-    verbose > 0 && @info "Generating visualizations"
+    verbosity > 0 && @info "Generating visualizations"
     basef = basef * "-$(element)-$(support)-$(mesh)-$(n)"
     # Generate a graphical display of resultants
     pfemm = if Symbol(element) == :q4rs
         # Here we generate an ad hoc machine: based on a single integration point, it improves the post processing of the stresses, especially the shear membrane.
-        FEMMShellQ4RSModule.make(IntegDomain(fes, GaussRule(2, 1), thickness), ocsys, mater)
+        pfemm = FEMMShellQ4RSModule.make(IntegDomain(fes, GaussRule(2, 1), thickness), ocsys, mater)
         associategeometry!(pfemm, geom0)
     elseif Symbol(element) == :t3ff
         femm
@@ -188,40 +188,40 @@ function _exe(;basef="scolo", element=:q4rs, mesh=:uniform, n=8, support = :soft
     for nc in 1:3
         fld = fieldfromintegpoints(pfemm, geom0, dchi, :moment, nc, outputcsys=ocsys)
         push!(scalars, ("m$nc", fld.values))
-        verbose > 0 && @info "m$nc Range: $(minimum(fld.values)) to $(maximum(fld.values))"
-        verbose > 0 && @info "Saving CSV files for m$nc"
+        verbosity > 0 && @info "m$nc Range: $(minimum(fld.values)) to $(maximum(fld.values))"
+        verbosity > 0 && @info "Saving CSV files for m$nc"
         savecsv("$(basef)-midsection-m$(nc).csv", a=midsection_angles, v=fld.values[midsection_nodes_ordered])
         savecsv("$(basef)-diaphragm-m$(nc).csv", a=diaphragm_angles, v=fld.values[diaphragm_nodes_ordered])
         savecsv("$(basef)-peak-m$(nc).csv", a=peak_dists, v=fld.values[peak_nodes_ordered])
         savecsv("$(basef)-free-m$(nc).csv", a=free_dists, v=fld.values[free_nodes_ordered])
     end
-    verbose > 0 && @info "Saving vtu files for m resultants"
+    verbosity > 0 && @info "Saving vtu files for m resultants"
     vtkwrite("$(basef)-m.vtu", fens, fes; scalars=scalars, vectors=[("u", dchi.values[:, 1:3])])
     scalars = []
     for nc in 1:3
         fld = fieldfromintegpoints(pfemm, geom0, dchi, :membrane, nc, outputcsys=ocsys)
         push!(scalars, ("n$nc", fld.values))
-        verbose > 0 && @info "n$nc Range: $(minimum(fld.values)) to $(maximum(fld.values))"
-        verbose > 0 && @info "Saving CSV files for n$nc"
+        verbosity > 0 && @info "n$nc Range: $(minimum(fld.values)) to $(maximum(fld.values))"
+        verbosity > 0 && @info "Saving CSV files for n$nc"
         savecsv("$(basef)-midsection-n$(nc).csv", a=midsection_angles, v=fld.values[midsection_nodes_ordered])
         savecsv("$(basef)-diaphragm-n$(nc).csv", a=diaphragm_angles, v=fld.values[diaphragm_nodes_ordered])
         savecsv("$(basef)-peak-n$(nc).csv", a=peak_dists, v=fld.values[peak_nodes_ordered])
         savecsv("$(basef)-free-n$(nc).csv", a=free_dists, v=fld.values[free_nodes_ordered])
     end
-    verbose > 0 && @info "Saving vtu files for n resultants"
+    verbosity > 0 && @info "Saving vtu files for n resultants"
     vtkwrite("$(basef)-n.vtu", fens, fes; scalars=scalars, vectors=[("u", dchi.values[:, 1:3])])
     scalars = []
     for nc in 1:2
         fld = fieldfromintegpoints(pfemm, geom0, dchi, :shear, nc, outputcsys=ocsys)
         push!(scalars, ("q$nc", fld.values))
-        verbose > 0 && @info "q$nc Range: $(minimum(fld.values)) to $(maximum(fld.values))"
-        verbose > 0 && @info "Saving CSV files for q$nc"
+        verbosity > 0 && @info "q$nc Range: $(minimum(fld.values)) to $(maximum(fld.values))"
+        verbosity > 0 && @info "Saving CSV files for q$nc"
         savecsv("$(basef)-midsection-q$(nc).csv", a=midsection_angles, v=fld.values[midsection_nodes_ordered])
         savecsv("$(basef)-diaphragm-q$(nc).csv", a=diaphragm_angles, v=fld.values[diaphragm_nodes_ordered])
         savecsv("$(basef)-peak-q$(nc).csv", a=peak_dists, v=fld.values[peak_nodes_ordered])
         savecsv("$(basef)-free-q$(nc).csv", a=free_dists, v=fld.values[free_nodes_ordered])
     end
-    verbose > 0 && @info "Saving vtu files for q resultants"
+    verbosity > 0 && @info "Saving vtu files for q resultants"
     vtkwrite("$(basef)-q.vtu", fens, fes; scalars=scalars, vectors=[("u", dchi.values[:, 1:3])])
     
     return nothing
@@ -289,11 +289,12 @@ const CORNERS = [
     (:D, "diaphragm", :b),
     ]
 
-function extrapolate_resultants(basef = "", ns = [16, 32, 64, 128], res = "q")
+function extrapolate_resultants(;basef = "", ns = [16, 32, 64, 128], res = "q", verbosity=0)
     ncs = res == "q" ? (1:2) : (1:3)
-    results = [] 
+    results = Dict()
     for corner in CORNERS
         edge = corner[2]
+        components = Dict()
         for nc in ncs
             r = Float64[]
             for n in ns
@@ -308,15 +309,17 @@ function extrapolate_resultants(basef = "", ns = [16, 32, 64, 128], res = "q")
                 e = (success = false, message = "no result")
             end
             if e.success
-                @info "$(corner[1]): $(res)$(nc)"
-                @info "q_ci = $(e.q_star) +/- $(e.q_star_ci), beta_ci = $(e.beta_star) +/- $(e.beta_star_ci)"
+                verbosity > 0 && @info "$(corner[1]): $(res)$(nc)"
+                verbosity > 0 && @info "q_ci = $(e.q_star) +/- $(e.q_star_ci), beta_ci = $(e.beta_star) +/- $(e.beta_star_ci)"
             else
-                @warn "$(corner[1]): $(res)$(nc) - no result"
+                verbosity > 0 && @warn "$(corner[1]): $(res)$(nc) - no result"
             end
-            push!(results, (corner = corner[1], nc = nc, e = e))
+            components[nc] = e
         end
+        results[corner[1]] = components
     end
     for edge in ["diaphragm"]#["midsection", "diaphragm", "peak", "free"]
+        components = Dict()
         for nc in ncs
             rmx = Float64[]
             rmn = Float64[]
@@ -334,12 +337,12 @@ function extrapolate_resultants(basef = "", ns = [16, 32, 64, 128], res = "q")
                 e = (success = false, message = "no result")
             end
             if e.success
-                @info "$(edge): $(res)$(nc) maximum"
-                @info "q_ci = $(e.q_star) +/- $(e.q_star_ci), beta_ci = $(e.beta_star) +/- $(e.beta_star_ci)"
+                verbosity > 0 && @info "$(edge): $(res)$(nc) maximum"
+                verbosity > 0 && @info "q_ci = $(e.q_star) +/- $(e.q_star_ci), beta_ci = $(e.beta_star) +/- $(e.beta_star_ci)"
             else
-                @warn "$(edge): $(res)$(nc) maximum - no result"
+                verbosity > 0 && @warn "$(edge): $(res)$(nc) maximum - no result"
             end
-            push!(results, (edge = Symbol(edge), nc = nc, kind = :maximum, e = e))
+            components[nc] = e
             r = rmn
             e = nothing
             try    
@@ -348,18 +351,18 @@ function extrapolate_resultants(basef = "", ns = [16, 32, 64, 128], res = "q")
                 e = (success = false, message = "no result")
             end
             if e.success
-                @info "$(edge): $(res)$(nc) minimum"
-                @info "q_ci = $(e.q_star) +/- $(e.q_star_ci), beta_ci = $(e.beta_star) +/- $(e.beta_star_ci)"
+                verbosity > 0 && @info "$(edge): $(res)$(nc) minimum"
+                verbosity > 0 && @info "q_ci = $(e.q_star) +/- $(e.q_star_ci), beta_ci = $(e.beta_star) +/- $(e.beta_star_ci)"
             else
-                @warn "$(edge): $(res)$(nc) minimum - no result"
+                verbosity > 0 && @warn "$(edge): $(res)$(nc) minimum - no result"
             end
-            push!(results, (edge = Symbol(edge), nc = nc, kind = :minimum, e = e))
         end
+        results[Symbol(edge)] = components
     end
     return results
 end
 
-function resultants(;ns=[128, 256, 512, 1024], mesh=:uniform, element=:q4rs, support=:soft, verbose=0)
+function resultants(;ns=[128, 256, 512, 1024], mesh=:uniform, element=:q4rs, support=:soft, verbosity=0)
     deflection_only = false
     if Symbol(element) == :q4rs
     elseif Symbol(element) == :t3ff
@@ -367,12 +370,12 @@ function resultants(;ns=[128, 256, 512, 1024], mesh=:uniform, element=:q4rs, sup
         throw(ArgumentError("Unsupported element type"))
     end
     for n in ns
-        _exe(element=Symbol(element), mesh=Symbol(mesh), n=n, support=Symbol(support), deflection_only=deflection_only, verbose=verbose)
+        _exe(element=Symbol(element), mesh=Symbol(mesh), n=n, support=Symbol(support), deflection_only=deflection_only, verbosity=verbosity)
     end
     return nothing
 end
 
-function deflection(;ns=4 .* [16, 32, 64, 128, ], mesh=:uniform, element=:q4rs, support=:soft, verbose=0)
+function deflection(;ns=4 .* [16, 32, 64, 128, ], mesh=:uniform, element=:q4rs, support=:soft, verbosity=0)
     deflection_only = true 
     deflectionsB = Float64[]
     if Symbol(element) == :q4rs
@@ -381,7 +384,7 @@ function deflection(;ns=4 .* [16, 32, 64, 128, ], mesh=:uniform, element=:q4rs, 
         throw(ArgumentError("Unsupported element type"))
     end
     for n in ns
-        v = _exe(element=Symbol(element), mesh=Symbol(mesh), n=n, support=Symbol(support), deflection_only=deflection_only, verbose=verbose)
+        v = _exe(element=Symbol(element), mesh=Symbol(mesh), n=n, support=Symbol(support), deflection_only=deflection_only, verbosity=verbosity)
         push!(deflectionsB, v)
     end
     if length(ns) > 3
@@ -391,7 +394,11 @@ function deflection(;ns=4 .* [16, 32, 64, 128, ], mesh=:uniform, element=:q4rs, 
     else
         extrapolation = nothing
     end
-    return ns, deflectionsB, extrapolation
+    return Dict(
+        "ns" => ns,
+        "deflections" => deflectionsB,   
+        "results_of_extrapolation" => extrapolation
+    )
 end
 
 nothing
