@@ -61,6 +61,8 @@ To choose something else, use the argument flags. For instance:
 ```
 julia --project=. driver.jl -s hard -e t3ff -N 16 -c deflection
 ```
+will select hard simple support over the diaphragm, the triangle element,
+and the initial mesh will have 16 edges along the diaphragm and 2*16 edges axially.
 This time, the prints will be:
 ```
 [ Info: Argument values:
