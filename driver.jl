@@ -4,7 +4,7 @@ Pkg.instantiate()
 
 using ArgParse
 using JSON
-using ScordelisLoRoofBenchmark
+
 
 function parse_commandline()
     s = ArgParseSettings()
@@ -77,6 +77,8 @@ support = p["support"]
 ns = N .* [2^(j-1) for j in 1:nref]
 
 p["verbosity"] > 0 && @info "Number of elements along the diaphragm: $(ns)"
+
+using ScordelisLoRoofBenchmark
 
 if p["compute"] == "deflection"
     @info "Computing deflection..."
