@@ -237,47 +237,43 @@ const MARKERS = [
     "square*",
     "diamond*",
 ]
-const MARK_REPEAT = [37, 43, 57, 79, 23, 27, 29] .+ 173
+const MARK_REPEAT = [3, 4, 7] 
 
-function plot_resultants(basef = "", 
-              res = "q")
+function plot_resultants(;basefn = "", res = "q", verbosity = 0)
     ncs = res == "q" ? (1:2) : (1:3)
     for edge in ["midsection", "diaphragm", "peak", "free"]
         objects = []
         for nc in ncs
-            f = "$(basef)-$(edge)-$(res)$(nc).csv"
+            f = "$(basefn)-$(edge)-$(res)$(nc).csv"
             A = readdlm(f, ',', Float64; skipstart=1)
+            mr = MARK_REPEAT[nc] + Int(round(size(A, 1) / 7))
             @pgf o = PGFPlotsX.Plot(
             {
             color = COLORS[nc],
-            mark=MARKERS[nc], mark_size=2.5, mark_repeat=MARK_REPEAT[nc],
+            mark=MARKERS[nc], mark_size=2.5, mark_repeat=mr,
             line_width  = 1.0
             },
             Coordinates([v for v in  zip(A[:,1], A[:,2])])
             )
             push!(objects, o)
-            # push!(objects, LegendEntry("$(res)$(nc)"))
         end
         @pgf ax = Axis(
             {
                 title = "$(edge)",
                 xlabel = "Normalized distance",
                 ylabel = "Resultant",
-                # xmin = -0.01,
-                # xmax = 1.01,
                 xmode = "linear",
                 ymode = "linear",
                 yminorgrids = "true",
                 grid = "both",
-                # legend_style = {
-                #     at = Coordinate(1.005, 0.5),
-                #     anchor = "west",
-                # },
             },
             objects...
         )
-        display(ax)
-        pgfsave("$(basef)-$(edge)-$(res).pdf", ax)
+        verbosity > 0 && display(ax)
+        verbosity > 0 && @info "Edge $(edge)"
+        f = "$(basefn)-$(edge)-$(res).pdf"
+        verbosity > 0 && @info "Saving plot $f"
+        pgfsave(f, ax)
     end
     return true
 end
@@ -362,7 +358,7 @@ function extrapolate_resultants(;basef = "", ns = [16, 32, 64, 128], res = "q", 
     return results
 end
 
-function resultants(;ns=[128, 256, 512, 1024], mesh=:uniform, element=:q4rs, support=:soft, verbosity=0)
+function compute_resultants(;ns=[128, 256, 512, 1024], mesh=:uniform, element=:q4rs, support=:soft, verbosity=0)
     deflection_only = false
     if Symbol(element) == :q4rs
     elseif Symbol(element) == :t3ff
@@ -375,7 +371,7 @@ function resultants(;ns=[128, 256, 512, 1024], mesh=:uniform, element=:q4rs, sup
     return nothing
 end
 
-function deflection(;ns=4 .* [16, 32, 64, 128, ], mesh=:uniform, element=:q4rs, support=:soft, verbosity=0)
+function compute_deflection(;ns=4 .* [16, 32, 64, 128, ], mesh=:uniform, element=:q4rs, support=:soft, verbosity=0)
     deflection_only = true 
     deflectionsB = Float64[]
     if Symbol(element) == :q4rs
@@ -396,7 +392,7 @@ function deflection(;ns=4 .* [16, 32, 64, 128, ], mesh=:uniform, element=:q4rs, 
     end
     return Dict(
         "ns" => ns,
-        "deflections" => deflectionsB,   
+        "deflections_at_B" => deflectionsB,   
         "results_of_extrapolation" => extrapolation
     )
 end
