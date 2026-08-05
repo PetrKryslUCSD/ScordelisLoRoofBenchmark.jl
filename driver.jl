@@ -27,7 +27,7 @@ function parse_commandline()
             :arg_type => Int,
             :default => 4
         ),
-        ["--mesh",],
+        ["--mesh", "-m"],
         Dict(
             :help => "Mesh type (uniform or biased)",
             :arg_type => String,
