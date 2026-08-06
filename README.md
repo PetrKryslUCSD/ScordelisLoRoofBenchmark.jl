@@ -54,7 +54,7 @@ The following output will be printed:
 [ Info: Element: q4rs; Support: hard; Mesh: biased, 32 elements per side
 [ Info: Number of nodes: 2145; Number of elements: 2048
 [ Info: Deflection at B: -0.3001441
-[ Info: Deflection extrapolation stored in deflection_extrapolations.json
+[ Info: Deflection extrapolation stored in deflection_extrapolations-hard-biased-q4rs-4-4.json
 ```
 
 To choose something else, use the argument flags. For instance:
@@ -63,7 +63,7 @@ julia --project=. driver.jl -s hard -e t3ff -N 16 -c deflection
 ```
 will select hard simple support over the diaphragm, the triangle element,
 and the initial mesh will have 16 edges along the diaphragm and 2*16 edges axially.
-This time, the prints will be:
+This time, the printouts will be:
 ```
 [ Info: Argument values:
 [ Info:   support = hard
@@ -87,7 +87,7 @@ This time, the prints will be:
 [ Info: Element: t3ff; Support: hard; Mesh: biased, 128 elements per side
 [ Info: Number of nodes: 33153; Number of elements: 65536
 [ Info: Deflection at B: -0.3009366
-[ Info: Deflection extrapolation stored in deflection_extrapolations.json
+[ Info: Deflection extrapolation stored in deflection_extrapolations-hard-biased-t3ff-16-4.json
 ```
 
 The compute the resultants and their extrapolations, use this command line:
@@ -103,15 +103,15 @@ That will result in the more manageable output
 [ Info: Computing resultants...
 [ Info: Resultants along edges saved to CSV files.
 [ Info: Computing extrapolations...
-[ Info: Membrane force resultant extrapolations saved to n_extrapolations.json.
-[ Info: Membrane force resultant extrapolations saved to m_extrapolations.json.
-[ Info: Shear force resultant extrapolations saved to q_extrapolations.json.
+[ Info: Membrane force resultant extrapolations saved to n_extrapolations-hard-biased-t3ff-16-4.json.
+[ Info: Membrane force resultant extrapolations saved to m_extrapolations-hard-biased-t3ff-16-4.json.
+[ Info: Shear force resultant extrapolations saved to q_extrapolations-hard-biased-t3ff-16-4.json.
 [ Info: Use --compute=plots to generate plots.
 ```
 Inspect the json files to discover how the resultants converged at the four corners
 and the diaphragm edge.
 
-For instance, these are the first few lines of `q_extrapolations.json`:
+For instance, these are the first few lines of `q_extrapolations-hard-biased-t3ff-16-4.json`:
 ```
 {
   "A": {
@@ -124,7 +124,7 @@ For instance, these are the first few lines of `q_extrapolations.json`:
       "edat": [
         {
 ```
-The output here is for the corner A, component of the shear force number 1.
+The data here is for the corner A, component of the shear force number 1.
 `q_star` is the estimate of the true solution, `q_star_ci` is the estimate 
 of the confidence interval halfwidth such that the solution is
 `q_star` +/- `q_star_ci`. `edat` is the complete data from which the extrapolation 
