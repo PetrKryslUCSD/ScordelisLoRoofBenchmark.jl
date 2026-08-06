@@ -80,11 +80,14 @@ p["verbosity"] > 0 && @info "Number of elements along the diaphragm: $(ns)"
 
 using ScordelisLoRoofBenchmark
 
+code = "$(support)-$(mesh)-$(element)-$(N)-$(nref)"
+
 if p["compute"] == "deflection"
     @info "Computing deflection..."
     results = ScordelisLoRoofBenchmark.compute_deflection(support=support, element=element, mesh=mesh, ns=ns, verbosity=p["verbosity"])
-    @info "Deflection extrapolation stored in deflection_extrapolations.json"
-    JSON.json("deflection_extrapolations.json", results; pretty=true, allownan=true)
+    storeas = "deflection_extrapolations-$(code).json"
+    @info "Deflection extrapolation stored in $storeas"
+    JSON.json(storeas, results; pretty=true, allownan=true)
 end
 
 if p["compute"] == "resultants"
@@ -94,14 +97,17 @@ if p["compute"] == "resultants"
     @info "Computing extrapolations..."
     basef = "scolo-$(element)-$(support)-$(mesh)"
     results = ScordelisLoRoofBenchmark.extrapolate_resultants(basef = basef, ns = ns, res = "n", verbosity=p["verbosity"])
-    JSON.json("n_extrapolations.json", results; pretty=true, allownan=true)
-    @info "Membrane force resultant extrapolations saved to n_extrapolations.json."
+    storeas = "n_extrapolations-$(code).json"
+    JSON.json(storeas, results; pretty=true, allownan=true)
+    @info "Membrane force resultant extrapolations saved to $storeas."
     results = ScordelisLoRoofBenchmark.extrapolate_resultants(basef = basef, ns = ns, res = "m", verbosity=p["verbosity"])
-    JSON.json("m_extrapolations.json", results; pretty=true, allownan=true)
-    @info "Membrane force resultant extrapolations saved to m_extrapolations.json."
+    storeas = "m_extrapolations-$(code).json"
+    JSON.json(storeas, results; pretty=true, allownan=true)
+    @info "Membrane force resultant extrapolations saved to $storeas."
     results = ScordelisLoRoofBenchmark.extrapolate_resultants(basef = basef, ns = ns, res = "q", verbosity=p["verbosity"])
-    JSON.json("q_extrapolations.json", results; pretty=true, allownan=true)
-    @info "Shear force resultant extrapolations saved to q_extrapolations.json."
+    storeas = "q_extrapolations-$(code).json"
+    JSON.json(storeas, results; pretty=true, allownan=true)
+    @info "Shear force resultant extrapolations saved to $storeas."
     @info "Use --compute=plots to generate plots."
 end
 
