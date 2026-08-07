@@ -239,6 +239,13 @@ const MARKERS = [
 ]
 const MARK_REPEAT = [3, 4, 7] 
 
+const EDGES = Dict(
+    "midsection" => ("A", "B"),
+    "free" => ("C", "B"),
+    "diaphragm" => ("D", "C"),
+    "peak" => ("D", "A"),
+)
+
 function plot_resultants(;basefn = "", res = "q", verbosity = 0)
     ncs = res == "q" ? (1:2) : (1:3)
     for edge in ["midsection", "diaphragm", "peak", "free"]
@@ -260,7 +267,7 @@ function plot_resultants(;basefn = "", res = "q", verbosity = 0)
         @pgf ax = Axis(
             {
                 title = "$(edge)",
-                xlabel = "Normalized distance",
+                xlabel = EDGES[edge][1] * "~~~~~~~~~~Normalized distance~~~~~~~~~~" * EDGES[edge][2],
                 ylabel = "Resultant",
                 xmode = "linear",
                 ymode = "linear",
