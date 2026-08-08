@@ -321,7 +321,7 @@ function extrapolate_resultants(;basef = "", ns = [16, 32, 64, 128], res = "q", 
         end
         results[corner[1]] = components
     end
-    for edge in ["diaphragm"]#["midsection", "diaphragm", "peak", "free"]
+    for edge in ["midsection", "diaphragm"]#["diaphragm", "peak", "free"]
         components = Dict()
         for nc in ncs
             rmx = Float64[]
