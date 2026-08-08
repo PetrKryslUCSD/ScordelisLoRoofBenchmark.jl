@@ -360,7 +360,7 @@ function extrapolate_resultants(;basef = "", ns = [16, 32, 64, 128], res = "q", 
                 verbosity > 0 && @warn "$(edge): $(res)$(nc) minimum - no result"
             end
             emn = e 
-            components[nc] = [emn, emx].
+            components[nc] = Dict("minimum" => emn, "maximum" => emx)
         end
         results[Symbol(edge)] = components
     end
