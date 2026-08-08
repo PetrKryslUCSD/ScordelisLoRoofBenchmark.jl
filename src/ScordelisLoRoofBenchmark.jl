@@ -321,7 +321,7 @@ function extrapolate_resultants(;basef = "", ns = [16, 32, 64, 128], res = "q", 
         end
         results[corner[1]] = components
     end
-    for edge in ["midsection", "diaphragm"]#["diaphragm", "peak", "free"]
+    for edge in ["midsection", "diaphragm", "peak", "free"]
         components = Dict()
         for nc in ncs
             rmx = Float64[]
@@ -345,7 +345,7 @@ function extrapolate_resultants(;basef = "", ns = [16, 32, 64, 128], res = "q", 
             else
                 verbosity > 0 && @warn "$(edge): $(res)$(nc) maximum - no result"
             end
-            components[nc] = e
+            emx = e
             r = rmn
             e = nothing
             try    
@@ -359,6 +359,8 @@ function extrapolate_resultants(;basef = "", ns = [16, 32, 64, 128], res = "q", 
             else
                 verbosity > 0 && @warn "$(edge): $(res)$(nc) minimum - no result"
             end
+            emn = e 
+            components[nc] = [emn, emx].
         end
         results[Symbol(edge)] = components
     end
