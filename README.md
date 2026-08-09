@@ -109,7 +109,7 @@ That will result in the more manageable output
 [ Info: Use --compute=plots to generate plots.
 ```
 Inspect the json files to discover how the resultants converged at the four corners
-and the diaphragm edge.
+and within the interiors of the edges.
 
 For instance, these are the first few lines of `q_extrapolations-hard-biased-t3ff-16-4.json`:
 ```
