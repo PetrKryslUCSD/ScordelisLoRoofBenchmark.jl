@@ -16,7 +16,7 @@ One can control
 - Support over the diaphragm (hard or soft).
 - The number of finite element edges along the diaphragm edge.
 - Finite element to employ (quadrilateral q4rs or triangle t3ff).
-- The mesh type  (biased or biased).
+- The mesh type  (biased or uniform).
 - The number of refinements of the mesh (4 to get the results with 
     uncertainty quantification in the form of a 95% confidence interval).
     The refinements are by bisection.
