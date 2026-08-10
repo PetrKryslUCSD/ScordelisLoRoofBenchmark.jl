@@ -6,6 +6,9 @@ The barrel vault (Scordelis-Lo) roof benchmark implementation.
 
 First of all, one needs an installation of [Julia](julialang.org).
 
+The following instructions assume the user is located in the shell within the `ScordelisLoRoofBenchmark`
+folder. 
+
 Run the file `driver.jl` like this to obtain help:
 ```
 julia --project driver.jl --help
