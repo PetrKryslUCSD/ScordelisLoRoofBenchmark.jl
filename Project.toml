@@ -1,6 +1,6 @@
 name = "ScordelisLoRoofBenchmark"
 uuid = "15a69de8-a591-4752-96a5-38aae4f8f87f"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Petr Krysl <pkrysl@ucsd.edu>"]
 
 [deps]
@@ -14,13 +14,16 @@ LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 PGFPlotsX = "8314cec4-20b6-5062-9cdb-752b83310925"
 RichardsonExtrapolationUQ = "3a1f33c3-1000-4744-b051-f2f05352a4ba"
 
+[sources]
+RichardsonExtrapolationUQ = {rev = "main", url = "https://github.com/PetrKryslUCSD/RichardsonExtrapolationUQ.jl.git"}
+
 [compat]
 ArgParse = "1.2.0"
 DelimitedFiles = "1.9.1"
-FinEtools = "8.2.11"
+FinEtools = "8.2.13"
 FinEtoolsDeforLinear = "3.1.0"
-FinEtoolsFlexStructures = "3.6.4"
+FinEtoolsFlexStructures = "3.7.1"
 JSON = "1.6.1"
-LinearAlgebra = "1.12.0"
+LinearAlgebra = "1.13.0"
 PGFPlotsX = "1.6.2"
 RichardsonExtrapolationUQ = "0.1.0"

@@ -15,6 +15,12 @@ function parse_commandline()
             :arg_type => Int,
             :default => 1
         ),
+        ["--thickness", "-t"],
+        Dict(
+            :help => "Thickness of the shell",
+            :arg_type => Float64,
+            :default => 0.25
+        ),
         ["--N", "-N"],
         Dict(
             :help => "Numbers of edges along the diaphragm",
@@ -69,6 +75,7 @@ if p["verbosity"] > 0
     end
 end
 
+thickness = p["thickness"]
 N = p["N"]
 nref = p["nref"]
 mesh = p["mesh"]
@@ -76,48 +83,49 @@ element = p["element"]
 support = p["support"]
 ns = N .* [2^(j-1) for j in 1:nref]
 
+p["verbosity"] > 0 && @info "Thickness: $(thickness)"
 p["verbosity"] > 0 && @info "Number of elements along the diaphragm: $(ns)"
 
-using ScordelisLoRoofBenchmark
+using ScordelisLoRoofBenchmark: compute_deflection, compute_resultants, extrapolate_resultants, plot_resultants
 
-code = "$(support)-$(mesh)-$(element)-$(N)-$(nref)"
+code = "scolo-$(thickness)-$(support)-$(mesh)-$(element)-N=$(N)-nref=$(nref)"
+p["verbosity"] > 0 && @info "Code: $(code)"
 
 if p["compute"] == "deflection"
     @info "Computing deflection..."
-    results = ScordelisLoRoofBenchmark.compute_deflection(support=support, element=element, mesh=mesh, ns=ns, verbosity=p["verbosity"])
-    storeas = "deflection_extrapolations-$(code).json"
-    @info "Deflection extrapolation stored in $storeas"
+    results = compute_deflection(code; thickness=thickness, support=support, element=element, mesh=mesh, ns=ns, verbosity=p["verbosity"])
+    storeas = "$(code)-deflection_extrapolations.json"
+    @info "Deflection extrapolation stored in \n      $storeas"
     JSON.json(storeas, results; pretty=true, allownan=true)
 end
 
 if p["compute"] == "resultants"
     @info "Computing resultants..."
-    ScordelisLoRoofBenchmark.compute_resultants(support=support, element=element, mesh=mesh, ns=ns, verbosity=p["verbosity"])
+    compute_resultants(code; thickness=thickness, support=support, element=element, mesh=mesh, ns=ns, verbosity=p["verbosity"])
     @info "Resultants along edges saved to CSV files."
     @info "Computing extrapolations..."
-    basef = "scolo-$(element)-$(support)-$(mesh)"
-    results = ScordelisLoRoofBenchmark.extrapolate_resultants(basef = basef, ns = ns, res = "n", verbosity=p["verbosity"])
-    storeas = "n_extrapolations-$(code).json"
+    results = extrapolate_resultants(code; ns = ns, res = "n", verbosity=p["verbosity"])
+    storeas = "$(code)-n_extrapolations.json"
     JSON.json(storeas, results; pretty=true, allownan=true)
-    @info "Membrane force resultant extrapolations saved to $storeas."
-    results = ScordelisLoRoofBenchmark.extrapolate_resultants(basef = basef, ns = ns, res = "m", verbosity=p["verbosity"])
-    storeas = "m_extrapolations-$(code).json"
+    @info "Membrane force resultant extrapolations saved to \n      $storeas."
+    results = extrapolate_resultants(code; ns = ns, res = "m", verbosity=p["verbosity"])
+    storeas = "$(code)-m_extrapolations.json"
     JSON.json(storeas, results; pretty=true, allownan=true)
-    @info "Membrane force resultant extrapolations saved to $storeas."
-    results = ScordelisLoRoofBenchmark.extrapolate_resultants(basef = basef, ns = ns, res = "q", verbosity=p["verbosity"])
-    storeas = "q_extrapolations-$(code).json"
+    @info "Membrane force resultant extrapolations saved to \n      $storeas."
+    results = extrapolate_resultants(code; ns = ns, res = "q", verbosity=p["verbosity"])
+    storeas = "$(code)-q_extrapolations.json"
     JSON.json(storeas, results; pretty=true, allownan=true)
-    @info "Shear force resultant extrapolations saved to $storeas."
+    @info "Shear force resultant extrapolations saved to \n      $storeas."
     @info "Use --compute=plots to generate plots."
 end
 
 if p["compute"] == "plots"
     @info "Generating plots..."
     for n in ns
-        basefn = "scolo-$(element)-$(support)-$(mesh)" * "-$(n)"
-        ScordelisLoRoofBenchmark.plot_resultants(basefn=basefn, res="n", verbosity=p["verbosity"])
-        ScordelisLoRoofBenchmark.plot_resultants(basefn=basefn, res="m", verbosity=p["verbosity"])
-        ScordelisLoRoofBenchmark.plot_resultants(basefn=basefn, res="q", verbosity=p["verbosity"])
+        basefn = "$(code)" * "-$(n)"
+        plot_resultants(basefn=basefn, res="n", verbosity=p["verbosity"])
+        plot_resultants(basefn=basefn, res="m", verbosity=p["verbosity"])
+        plot_resultants(basefn=basefn, res="q", verbosity=p["verbosity"])
     end
     @info "Resultants along edges saved to PDF files."
 end

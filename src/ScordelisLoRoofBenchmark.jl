@@ -10,6 +10,9 @@ weight. It is interesting to observe that the geometry is such that the
 centerpoint of the roof moves upward under the self-weight (downwardly directed)
 load. Perhaps this is one reason why the problem is not straightforward
 numerically.
+
+Also, there are boundary layers and in fact in one case, for the soft simple 
+support on the diaphragm, one of the shear forces tends to infinity.
 """
 module ScordelisLoRoofBenchmark
 
@@ -31,15 +34,15 @@ using DelimitedFiles
 using PGFPlotsX
 
 # Parameters:
-const E = 4.32e8;
-const nu = 0.0;
-const thickness = 0.25; # geometrical dimensions are in feet
-const R = 25.0;
-const L = 50.0;
+const E = 4.32e8
+const nu = 0.0
+const THICKNESS = 0.25 # geometrical dimensions are in feet
+const R = 25.0
+const L = 50.0
 
 cylindrical!(csmatout, XYZ, tangents, feid, qpid) = begin
-    r = vec(deepcopy(XYZ));
-    r[2] = 0.0;
+    r = vec(deepcopy(XYZ))
+    r[2] = 0.0
     r[3] += R # see def of Z below
     csmatout[:, 3] .= vec(r)/norm(vec(r))
     csmatout[:, 2] .= (0.0, 1.0, 0.0) #  this is along the axis
@@ -47,22 +50,22 @@ cylindrical!(csmatout, XYZ, tangents, feid, qpid) = begin
     return csmatout
 end
 
-function _exe(;basef="scolo", element=:q4rs, mesh=:uniform, n=8, support = :soft, deflection_only=false, verbosity=0)
+function _exe(code; thickness=THICKNESS, element=:q4rs, mesh=:uniform, n=8, support=:soft, deflection_only=false, verbosity=0)
     verbosity > 0 && @info "Element: $element; Support: $support; Mesh: $mesh, $n elements per side"
     bias = 100
     if mesh == :uniform
-        fens, fes = Q4block(40/360*2*pi, L/2, n, 2*n);
+        fens, fes = Q4block(40/360*2*pi, L/2, n, 2*n)
         tolerance = L/2/n/100
     elseif mesh == :biased
         xs = 40/360*2*pi .- reverse(biasedspace(0.0, 40/360*2*pi, n+1, bias))
         ys = biasedspace(0.0, L/2, 2*n+1, bias)
-        fens, fes = Q4blockx(xs, ys);
+        fens, fes = Q4blockx(xs, ys)
         tolerance = (minimum(abs.(diff(xs))) + minimum(abs.(diff(ys)))) / 100
-    else 
+    else
         @error "Unknown mesh"
     end
     if element == :t3ff
-        fens, fes = Q4toT3(fens, fes);
+        fens, fes = Q4toT3(fens, fes)
     end
     verbosity > 0 && @info "Number of nodes: $(count(fens)); Number of elements: $(count(fes))"
     bfes = meshboundary(fes)
@@ -72,8 +75,8 @@ function _exe(;basef="scolo", element=:q4rs, mesh=:uniform, n=8, support = :soft
     ell1 = selectelem(fens, bfes; facing=true, direction=Float64[0, +1])
     fens.xyz = xyz3(fens)
     for i in 1:count(fens)
-        a=fens.xyz[i, 1];
-        y=fens.xyz[i, 2];
+        a=fens.xyz[i, 1]
+        y=fens.xyz[i, 2]
         fens.xyz[i, :] .= (R*sin(a), y, R*(cos(a)-1))
     end
 
@@ -120,7 +123,7 @@ function _exe(;basef="scolo", element=:q4rs, mesh=:uniform, n=8, support = :soft
         setebc!(dchi, l1, true, i)
     end
     applyebc!(dchi)
-    numberdofs!(dchi);
+    numberdofs!(dchi)
 
     massem = SysmatAssemblerFFBlock(nfreedofs(dchi))
     vassem = SysvecAssemblerFBlock(nfreedofs(dchi))
@@ -128,7 +131,7 @@ function _exe(;basef="scolo", element=:q4rs, mesh=:uniform, n=8, support = :soft
     # Assemble the system matrix
     associategeometry!(femm, geom0)
     # vtkwrite("debug-normals-q4rs-$(n).vtu", fens, fes; vectors = [("normals", deepcopy(femm._normals[:, 1:3]))])
-    Kff = stiffness(femm, massem, geom0, u0, Rfield0, dchi);
+    Kff = stiffness(femm, massem, geom0, u0, Rfield0, dchi)
 
     # Midpoint of the free edge
     nl = selectnode(fens; box=Float64[sin(40/360*2*pi)*25 sin(40/360*2*pi)*25 L/2 L/2 -Inf Inf], inflate=tolerance)
@@ -137,20 +140,20 @@ function _exe(;basef="scolo", element=:q4rs, mesh=:uniform, n=8, support = :soft
     elseif Symbol(element) == :t3ff
         FEMMBase(IntegDomain(fes, TriRule(1)))
     end
-    fi = ForceIntensity(Float64[0, 0, -90, 0, 0, 0]);
-    Ff = distribloads(lfemm, vassem, geom0, dchi, fi, 2);
+    fi = ForceIntensity(Float64[0, 0, -90 * (thickness / THICKNESS)^2, 0, 0, 0])
+    Ff = distribloads(lfemm, vassem, geom0, dchi, fi, 2)
 
     # Solve
     Uf = Kff \ Ff
     scattersysvec!(dchi, Uf, DOF_KIND_FREE)
-    
+
     deflatB = dchi.values[nl, 3][1]
     verbosity > 0 && @info "Deflection at B: $(round(deflatB, digits = 7))"
 
     if deflection_only
         return deflatB
     end
-    
+
     verbosity > 0 && @info "Generating resultants and visualizations"
 
     midsection_nodes = connectednodes(subset(bfes, ell1))
@@ -175,7 +178,7 @@ function _exe(;basef="scolo", element=:q4rs, mesh=:uniform, n=8, support = :soft
 
     # Visualization
     verbosity > 0 && @info "Generating visualizations"
-    basef = basef * "-$(element)-$(support)-$(mesh)-$(n)"
+    basef = code * "-$(n)"
     # Generate a graphical display of resultants
     pfemm = if Symbol(element) == :q4rs
         # Here we generate an ad hoc machine: based on a single integration point, it improves the post processing of the stresses, especially the shear membrane.
@@ -223,7 +226,7 @@ function _exe(;basef="scolo", element=:q4rs, mesh=:uniform, n=8, support = :soft
     end
     verbosity > 0 && @info "Saving vtu files for q resultants"
     vtkwrite("$(basef)-q.vtu", fens, fes; scalars=scalars, vectors=[("u", dchi.values[:, 1:3])])
-    
+
     return nothing
 end
 
@@ -231,13 +234,13 @@ const COLORS = ["red", "green", "blue", "black", "cyan", "magenta", "yellow", "g
 const MARKERS = [
     "diamond",
     "triangle",
-    "square",  
+    "square",
     "triangle*",
     "x",
     "square*",
     "diamond*",
 ]
-const MARK_REPEAT = [3, 4, 7] 
+const MARK_REPEAT = [3, 4, 7]
 
 const EDGES = Dict(
     "midsection" => ("A", "B"),
@@ -246,7 +249,7 @@ const EDGES = Dict(
     "peak" => ("D", "A"),
 )
 
-function plot_resultants(;basefn = "", res = "q", verbosity = 0)
+function plot_resultants(; basefn="", res="q", verbosity=0)
     ncs = res == "q" ? (1:2) : (1:3)
     for edge in ["midsection", "diaphragm", "peak", "free"]
         objects = []
@@ -255,12 +258,12 @@ function plot_resultants(;basefn = "", res = "q", verbosity = 0)
             A = readdlm(f, ',', Float64; skipstart=1)
             mr = MARK_REPEAT[nc] + Int(round(size(A, 1) / 7))
             @pgf o = PGFPlotsX.Plot(
-            {
-            color = COLORS[nc],
-            mark=MARKERS[nc], mark_size=2.5, mark_repeat=mr,
-            line_width  = 1.0
-            },
-            Coordinates([v for v in  zip(A[:,1], A[:,2])])
+                {
+                    color = COLORS[nc],
+                    mark=MARKERS[nc], mark_size=2.5, mark_repeat=mr,
+                    line_width = 1.0
+                },
+                Coordinates([v for v in zip(A[:, 1], A[:, 2])])
             )
             push!(objects, o)
         end
@@ -290,9 +293,9 @@ const CORNERS = [
     (:B, "midsection", :e),
     (:C, "diaphragm", :e),
     (:D, "diaphragm", :b),
-    ]
+]
 
-function extrapolate_resultants(;basef = "", ns = [16, 32, 64, 128], res = "q", verbosity=0)
+function extrapolate_resultants(code; ns=[16, 32, 64, 128], res="q", verbosity=0)
     ncs = res == "q" ? (1:2) : (1:3)
     results = Dict()
     for corner in CORNERS
@@ -301,21 +304,22 @@ function extrapolate_resultants(;basef = "", ns = [16, 32, 64, 128], res = "q", 
         for nc in ncs
             r = Float64[]
             for n in ns
-                f = "$(basef)-$(n)-$(edge)-$(res)$(nc).csv"
+                f = "$(code)-$(n)-$(edge)-$(res)$(nc).csv"
                 A = readdlm(f, ',', Float64; skipstart=1)
                 push!(r, corner[3] == :b ? A[1, 2] : A[end, 2])
             end
             e = nothing
-            try    
+            try
                 e = RichardsonExtrapolationUQ.richextrapol_uq(r, 1.0 ./ ns)
             catch
-                e = (success = false, message = "no result")
+                e = (success=false, message="no result")
             end
             if e.success
                 verbosity > 0 && @info "$(corner[1]): $(res)$(nc)"
-                verbosity > 0 && @info "q_ci = $(e.q_star) +/- $(e.q_star_ci), beta_ci = $(e.beta_star) +/- $(e.beta_star_ci)"
+                verbosity > 0 && @info "q_ci = $(round(e.q_star, digits=7)) +/- $(round(e.q_star_ci, digits=4))"
+                verbosity > 0 && @info "beta_ci = $(round(e.beta_star, digits=4)) +/- $(round(e.beta_star_ci, digits=4))"
             else
-                verbosity > 0 && @warn "$(corner[1]): $(res)$(nc) - no result"
+                verbosity > 0 && @info "$(corner[1]): $(res)$(nc) - no result!"
             end
             components[nc] = e
         end
@@ -327,39 +331,41 @@ function extrapolate_resultants(;basef = "", ns = [16, 32, 64, 128], res = "q", 
             rmx = Float64[]
             rmn = Float64[]
             for n in ns
-                f = "$(basef)-$(n)-$(edge)-$(res)$(nc).csv"
+                f = "$(code)-$(n)-$(edge)-$(res)$(nc).csv"
                 A = readdlm(f, ',', Float64; skipstart=1)
                 push!(rmx, maximum(A[:, 2]))
                 push!(rmn, minimum(A[:, 2]))
             end
             r = rmx
             e = nothing
-            try    
+            try
                 e = RichardsonExtrapolationUQ.richextrapol_uq(r, 1.0 ./ ns)
             catch
-                e = (success = false, message = "no result")
+                e = (success=false, message="no result")
             end
             if e.success
                 verbosity > 0 && @info "$(edge): $(res)$(nc) maximum"
-                verbosity > 0 && @info "q_ci = $(e.q_star) +/- $(e.q_star_ci), beta_ci = $(e.beta_star) +/- $(e.beta_star_ci)"
+                verbosity > 0 && @info "q_ci = $(round(e.q_star, digits=7)) +/- $(round(e.q_star_ci, digits=4))"
+                verbosity > 0 && @info "beta_ci = $(round(e.beta_star, digits=4)) +/- $(round(e.beta_star_ci, digits=4))"
             else
-                verbosity > 0 && @warn "$(edge): $(res)$(nc) maximum - no result"
+                verbosity > 0 && @info "$(edge): $(res)$(nc) maximum - no result!"
             end
             emx = e
             r = rmn
             e = nothing
-            try    
+            try
                 e = RichardsonExtrapolationUQ.richextrapol_uq(r, 1.0 ./ ns)
             catch
-                e = (success = false, message = "no result")
+                e = (success=false, message="no result")
             end
             if e.success
                 verbosity > 0 && @info "$(edge): $(res)$(nc) minimum"
-                verbosity > 0 && @info "q_ci = $(e.q_star) +/- $(e.q_star_ci), beta_ci = $(e.beta_star) +/- $(e.beta_star_ci)"
+                verbosity > 0 && @info "q_ci = $(round(e.q_star, digits=7)) +/- $(round(e.q_star_ci, digits=4))"
+                verbosity > 0 && @info "beta_ci = $(round(e.beta_star, digits=4)) +/- $(round(e.beta_star_ci, digits=4))"
             else
-                verbosity > 0 && @warn "$(edge): $(res)$(nc) minimum - no result"
+                verbosity > 0 && @info "$(edge): $(res)$(nc) minimum - no result!"
             end
-            emn = e 
+            emn = e
             components[nc] = Dict("minimum" => emn, "maximum" => emx)
         end
         results[Symbol(edge)] = components
@@ -367,7 +373,7 @@ function extrapolate_resultants(;basef = "", ns = [16, 32, 64, 128], res = "q", 
     return results
 end
 
-function compute_resultants(;ns=[128, 256, 512, 1024], mesh=:uniform, element=:q4rs, support=:soft, verbosity=0)
+function compute_resultants(code; ns=[128, 256, 512, 1024], thickness=THICKNESS, mesh=:uniform, element=:q4rs, support=:soft, verbosity=0)
     deflection_only = false
     if Symbol(element) == :q4rs
     elseif Symbol(element) == :t3ff
@@ -375,13 +381,13 @@ function compute_resultants(;ns=[128, 256, 512, 1024], mesh=:uniform, element=:q
         throw(ArgumentError("Unsupported element type"))
     end
     for n in ns
-        _exe(element=Symbol(element), mesh=Symbol(mesh), n=n, support=Symbol(support), deflection_only=deflection_only, verbosity=verbosity)
+        _exe(code; thickness=thickness, element=Symbol(element), mesh=Symbol(mesh), n=n, support=Symbol(support), deflection_only=deflection_only, verbosity=verbosity)
     end
     return nothing
 end
 
-function compute_deflection(;ns=4 .* [16, 32, 64, 128, ], mesh=:uniform, element=:q4rs, support=:soft, verbosity=0)
-    deflection_only = true 
+function compute_deflection(code; ns=4 .* [16, 32, 64, 128,], thickness=THICKNESS, mesh=:uniform, element=:q4rs, support=:soft, verbosity=0)
+    deflection_only = true
     deflectionsB = Float64[]
     if Symbol(element) == :q4rs
     elseif Symbol(element) == :t3ff
@@ -389,7 +395,7 @@ function compute_deflection(;ns=4 .* [16, 32, 64, 128, ], mesh=:uniform, element
         throw(ArgumentError("Unsupported element type"))
     end
     for n in ns
-        v = _exe(element=Symbol(element), mesh=Symbol(mesh), n=n, support=Symbol(support), deflection_only=deflection_only, verbosity=verbosity)
+        v = _exe(code; thickness=thickness, element=Symbol(element), mesh=Symbol(mesh), n=n, support=Symbol(support), deflection_only=deflection_only, verbosity=verbosity)
         push!(deflectionsB, v)
     end
     if length(ns) > 3
@@ -401,7 +407,7 @@ function compute_deflection(;ns=4 .* [16, 32, 64, 128, ], mesh=:uniform, element
     end
     return Dict(
         "ns" => ns,
-        "deflections_at_B" => deflectionsB,   
+        "deflections_at_B" => deflectionsB,
         "results_of_extrapolation" => extrapolation
     )
 end
