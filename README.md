@@ -185,3 +185,9 @@ julia --project=. driver.jl -s hard -N 128 -e q4rs -c deflection
 julia --project=. driver.jl -s hard -N 128 -e q4rs -c resultants
 julia --project=. driver.jl -s hard -N 128 -e q4rs -c plots
 ```
+and
+```
+julia --project=. driver.jl -s soft -N 128 -e q4rs -c deflection
+julia --project=. driver.jl -s soft -N 128 -e q4rs -c resultants
+julia --project=. driver.jl -s soft -N 128 -e q4rs -c plots
+```
