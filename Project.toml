@@ -5,7 +5,6 @@ authors = ["Petr Krysl <pkrysl@ucsd.edu>"]
 
 [deps]
 ArgParse = "c7e460c6-2fb9-53a9-8c5b-16f535851c63"
-CliqueTrees = "60701a23-6482-424a-84db-faee86b9b1f8"
 DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
 FinEtools = "91bb5406-6c9a-523d-811d-0644c4229550"
 FinEtoolsDeforLinear = "e9187c00-8bdd-11e9-1e70-7ba8303116a2"
@@ -15,17 +14,13 @@ LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 PGFPlotsX = "8314cec4-20b6-5062-9cdb-752b83310925"
 RichardsonExtrapolationUQ = "3a1f33c3-1000-4744-b051-f2f05352a4ba"
 
-[sources]
-RichardsonExtrapolationUQ = {rev = "main", url = "https://github.com/PetrKryslUCSD/RichardsonExtrapolationUQ.jl.git"}
-
 [compat]
 ArgParse = "1.2.0"
-CliqueTrees = "1.19.7"
 DelimitedFiles = "1.9.1"
 FinEtools = "8.2.13"
 FinEtoolsDeforLinear = "3.1.0"
 FinEtoolsFlexStructures = "3.7.1"
 JSON = "1.6.1"
-LinearAlgebra = "1.13.0"
+LinearAlgebra = "1.12.0"
 PGFPlotsX = "1.6.2"
 RichardsonExtrapolationUQ = "0.1.0"
