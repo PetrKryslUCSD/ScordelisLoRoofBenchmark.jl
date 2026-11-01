@@ -10,9 +10,13 @@ FinEtools = "91bb5406-6c9a-523d-811d-0644c4229550"
 FinEtoolsDeforLinear = "e9187c00-8bdd-11e9-1e70-7ba8303116a2"
 FinEtoolsFlexStructures = "723391e6-6814-4d1d-921c-018f691214d8"
 JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
+LDLFactorizations = "40e66cde-538c-5869-a4ad-c39174c6795b"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 PGFPlotsX = "8314cec4-20b6-5062-9cdb-752b83310925"
 RichardsonExtrapolationUQ = "3a1f33c3-1000-4744-b051-f2f05352a4ba"
+
+[sources]
+RichardsonExtrapolationUQ = {rev = "main", url = "https://github.com/PetrKryslUCSD/RichardsonExtrapolationUQ.jl.git"}
 
 [compat]
 ArgParse = "1.2.0"
@@ -21,6 +25,7 @@ FinEtools = "8.2.13"
 FinEtoolsDeforLinear = "3.1.0"
 FinEtoolsFlexStructures = "3.7.1"
 JSON = "1.6.1"
+LDLFactorizations = "0.10.2"
 LinearAlgebra = "1.12.0"
 PGFPlotsX = "1.6.2"
 RichardsonExtrapolationUQ = "0.1.0"

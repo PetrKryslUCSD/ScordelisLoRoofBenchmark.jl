@@ -12,12 +12,12 @@ load. Perhaps this is one reason why the problem is not straightforward
 numerically.
 
 Also, there are boundary layers and in fact in one case, for the soft simple 
-support on the diaphragm, one of the shear forces tends to infinity.
+support on the diaphragm, one of the shear forces LDLFactorizationstends to infinity.
 """
 module ScordelisLoRoofBenchmark
 
 using LinearAlgebra
-using CliqueTrees.Multifrontal: ChordalCholesky, cholesky
+using LDLFactorizations
 using FinEtools
 using FinEtools.AlgoBaseModule: solve_blocked!
 using FinEtools.AlgoBaseModule: richextrapol
@@ -145,8 +145,8 @@ function _exe(code; thickness=THICKNESS, element=:q4rs, mesh=:uniform, n=8, supp
     Ff = distribloads(lfemm, vassem, geom0, dchi, fi, 2)
 
     # Solve
-    F = cholesky!(ChordalCholesky(Kff))
-    Uf = F \ Ff
+    LDLT = ldl(Kff) 
+    Uf = LDLT \ Ff
     scattersysvec!(dchi, Uf, DOF_KIND_FREE)
 
     deflatB = dchi.values[nl, 3][1]
