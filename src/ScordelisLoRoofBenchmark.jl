@@ -17,6 +17,7 @@ support on the diaphragm, one of the shear forces tends to infinity.
 module ScordelisLoRoofBenchmark
 
 using LinearAlgebra
+using CliqueTrees.Multifrontal: ChordalCholesky, cholesky
 using FinEtools
 using FinEtools.AlgoBaseModule: solve_blocked!
 using FinEtools.AlgoBaseModule: richextrapol
@@ -144,7 +145,8 @@ function _exe(code; thickness=THICKNESS, element=:q4rs, mesh=:uniform, n=8, supp
     Ff = distribloads(lfemm, vassem, geom0, dchi, fi, 2)
 
     # Solve
-    Uf = Kff \ Ff
+    F = cholesky!(ChordalCholesky(Kff))
+    Uf = F \ Ff
     scattersysvec!(dchi, Uf, DOF_KIND_FREE)
 
     deflatB = dchi.values[nl, 3][1]
