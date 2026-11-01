@@ -145,8 +145,9 @@ function _exe(code; thickness=THICKNESS, element=:q4rs, mesh=:uniform, n=8, supp
     Ff = distribloads(lfemm, vassem, geom0, dchi, fi, 2)
 
     # Solve
-    LDLT = ldl(Kff) 
-    Uf = LDLT \ Ff
+    # LDLT = ldl(Kff) 
+    # Uf = LDLT \ Ff
+    Uf = Symmetric(Kff) \ Ff
     scattersysvec!(dchi, Uf, DOF_KIND_FREE)
 
     deflatB = dchi.values[nl, 3][1]
