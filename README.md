@@ -13,10 +13,42 @@ Run the file `driver.jl` like this to obtain help:
 ```
 julia --project driver.jl --help
 ```
+The output should be
+```
+PS C:\Users\pkonl\repos\ScordelisLoRoofBenchmark.jl> julia --project=. .\driver.jl --help
+usage: driver.jl [-v VERBOSITY] [-t THICKNESS] [-N N] [-n NREF]
+                 [-m MESH] [-s SUPPORT] [-e ELEMENT] [-c COMPUTE] [-h]
+
+optional arguments:
+  -v, --verbosity VERBOSITY
+                        Verbosity level (0 = quiet, 1 = info, 2 =
+                        debug) (type: Int64, default: 1)
+  -t, --thickness THICKNESS
+                        Thickness of the shell (type: Float64,
+                        default: 0.25)
+  -N, --N N             Numbers of edges along the diaphragm (type:
+                        Int64, default: 4)
+  -n, --nref NREF       Number of refinements (for extrapolation
+                        study, 3 or 4 (for uncertainty
+                        quantification); 1 = no refinement) (type:
+                        Int64, default: 4)
+  -m, --mesh MESH       Mesh type (uniform or biased) (default:
+                        "biased")
+  -s, --support SUPPORT
+                        Support type (soft or hard) (default: "hard")
+  -e, --element ELEMENT
+                        Element type (q4rs or t3ff) (default: "q4rs")
+  -c, --compute COMPUTE
+                        Compute type (deflection, resultants, plots)
+                        (default: "")
+  -h, --help            show this help message and exit
+
+PS C:\Users\pkonl\repos\ScordelisLoRoofBenchmark.jl> 
+```
 
 One can control 
 - What to compute (deflection, resultants, plots).
-- Thickness of the shell.
+- Thickness of the shell (0.25 is the usual value assumed for this benchmark). See the caveat at the bottom.
 - Support over the diaphragm (hard or soft).
 - The number of finite element edges along the diaphragm edge.
 - Finite element to employ (quadrilateral q4rs or triangle t3ff).
@@ -191,3 +223,13 @@ julia --project=. driver.jl -s soft -N 128 -e q4rs -c deflection
 julia --project=. driver.jl -s soft -N 128 -e q4rs -c resultants
 julia --project=. driver.jl -s soft -N 128 -e q4rs -c plots
 ```
+
+## Note on other thicknesses
+
+It is possible to compute solutions for other thicknesses than the default one,
+t=0.25 (this corresponds to the aspect ratio of 100). In particular, it is
+possible to compute solutions of much thinner shells. However, caution should
+be exercised: to compute *resolved* solutions of boundary layers for a much
+thinner shell will be very difficult! Recall that the dimension of the boundary
+layer is roughly proportional to the thickness of the shell, and hence an
+extremely refined mesh will be needed.

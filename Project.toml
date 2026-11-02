@@ -1,6 +1,6 @@
 name = "ScordelisLoRoofBenchmark"
 uuid = "15a69de8-a591-4752-96a5-38aae4f8f87f"
-version = "0.2.1"
+version = "0.2.2"
 authors = ["Petr Krysl <pkrysl@ucsd.edu>"]
 
 [deps]
