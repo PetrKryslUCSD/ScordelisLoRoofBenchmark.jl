@@ -17,17 +17,14 @@ support on the diaphragm, one of the shear forces LDLFactorizationstends to infi
 module ScordelisLoRoofBenchmark
 
 using LinearAlgebra
-using LDLFactorizations
 using FinEtools
-using FinEtools.AlgoBaseModule: solve_blocked!
 using FinEtools.AlgoBaseModule: richextrapol
 using FinEtoolsDeforLinear
 using FinEtoolsFlexStructures.FESetShellT3Module: FESetShellT3
 using FinEtoolsFlexStructures.FESetShellQ4Module: FESetShellQ4
 using FinEtoolsFlexStructures.FEMMShellT3FFModule
 using FinEtoolsFlexStructures.FEMMShellQ4RSModule
-using FinEtoolsFlexStructures.RotUtilModule: initial_Rfield, update_rotation_field!
-using FinEtools.MeshExportModule: VTKWrite
+using FinEtoolsFlexStructures.RotUtilModule: initial_Rfield
 using FinEtools.MeshExportModule.VTKWrite: vtkwrite
 using FinEtools.MeshExportModule.CSV: savecsv
 using RichardsonExtrapolationUQ
@@ -52,6 +49,10 @@ cylindrical!(csmatout, XYZ, tangents, feid, qpid) = begin
 end
 
 function _exe(code; thickness=THICKNESS, element=:q4rs, mesh=:uniform, n=8, support=:soft, deflection_only=false, verbosity=0)
+    if !((support == :soft) || (support == :hard))
+        @error "Using invalid support"
+        return nothing
+    end
     verbosity > 0 && @info "Element: $element; Support: $support; Mesh: $mesh, $n elements per side"
     bias = 100
     if mesh == :uniform
@@ -64,6 +65,7 @@ function _exe(code; thickness=THICKNESS, element=:q4rs, mesh=:uniform, n=8, supp
         tolerance = (minimum(abs.(diff(xs))) + minimum(abs.(diff(ys)))) / 100
     else
         @error "Unknown mesh"
+        return nothing
     end
     if element == :t3ff
         fens, fes = Q4toT3(fens, fes)
@@ -145,8 +147,6 @@ function _exe(code; thickness=THICKNESS, element=:q4rs, mesh=:uniform, n=8, supp
     Ff = distribloads(lfemm, vassem, geom0, dchi, fi, 2)
 
     # Solve
-    # LDLT = ldl(Kff) 
-    # Uf = LDLT \ Ff
     Uf = Symmetric(Kff) \ Ff
     scattersysvec!(dchi, Uf, DOF_KIND_FREE)
 
